@@ -1,5 +1,105 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_DENUNCIAS 5  // estructura estática: máximo de denuncias por carpeta
+#define MAX_STR 100
+
+// ------------------ ESTRUCTURAS ---------------------
+
+typedef struct {
+    char nombre[MAX_STR];
+    char tipoResolucion[MAX_STR]; // Condenatoria, Absolutoria, etc.
+    char fecha[MAX_STR];
+} Resolucion;
+
+typedef struct NodoResolucion {
+    Resolucion datos;
+    struct NodoResolucion *izq, *der; // Estructura dinámica compleja (ABB)
+} NodoResolucion;
+
+typedef struct {
+    char nombre[MAX_STR];
+    char rut[MAX_STR];
+    char estadoProcesal[MAX_STR];
+    char medidaCautelar[MAX_STR];
+} Imputado;
+
+typedef struct NodoImputado {
+    Imputado datos;
+    struct NodoImputado *sig; // Estructura dinámica simple
+} NodoImputado;
+
+typedef struct {
+    char ruc[MAX_STR];
+    char denunciante[MAX_STR];
+    char descripcion[MAX_STR];
+    char fecha[MAX_STR];
+} Denuncia;
+
+typedef struct {
+    char ruc[MAX_STR];
+    Denuncia denuncias[MAX_DENUNCIAS];
+    int totalDenuncias;
+    NodoImputado *listaImputados;
+    NodoResolucion *arbolResoluciones;
+} CarpetaInvestigativa;
+
+CarpetaInvestigativa agregarCarpeta() {
+    CarpetaInvestigativa carpeta;
+    printf("Ingrese RUC de la causa: ");
+    fgets(carpeta.ruc, MAX_STR, stdin); strtok(carpeta.ruc, "\n");
+
+    carpeta.totalDenuncias = 0;
+    carpeta.listaImputados = NULL;
+    carpeta.arbolResoluciones = NULL;
+
+    int cantidad;
+    printf("¿Cuántas denuncias desea ingresar (máx %d)? ", MAX_DENUNCIAS);
+    scanf("%d", &cantidad);
+    getchar(); // limpiar buffer
+
+    if (cantidad > MAX_DENUNCIAS) cantidad = MAX_DENUNCIAS;
+
+    for (int i = 0; i < cantidad; i++) {
+        printf("Denuncia #%d\n", i+1);
+        printf("  Denunciante: "); fgets(carpeta.denuncias[i].denunciante, MAX_STR, stdin); strtok(carpeta.denuncias[i].denunciante, "\n");
+        printf("  Descripción: "); fgets(carpeta.denuncias[i].descripcion, MAX_STR, stdin); strtok(carpeta.denuncias[i].descripcion, "\n");
+        printf("  Fecha: "); fgets(carpeta.denuncias[i].fecha, MAX_STR, stdin); strtok(carpeta.denuncias[i].fecha, "\n");
+        strcpy(carpeta.denuncias[i].ruc, carpeta.ruc);
+    }
+
+    carpeta.totalDenuncias = cantidad;
+
+    return carpeta;
+}
+void mostrarCarpeta(CarpetaInvestigativa c) {
+    printf("\n--- Carpeta RUC: %s ---\n", c.ruc);
+
+    printf("Denuncias:\n");
+    for (int i = 0; i < c.totalDenuncias; i++) {
+        printf("  #%d - Denunciante: %s | Fecha: %s\n", i+1, c.denuncias[i].denunciante, c.denuncias[i].fecha);
+        printf("       Descripción: %s\n", c.denuncias[i].descripcion);
+    }
+
+    printf("\nImputados:\n");
+    NodoImputado *temp = c.listaImputados;
+    while (temp != NULL) {
+        printf("  %s (%s) - Estado: %s | Medida Cautelar: %s\n", temp->datos.nombre, temp->datos.rut, temp->datos.estadoProcesal, temp->datos.medidaCautelar);
+        temp = temp->sig;
+    }
+
+    printf("\nResoluciones judiciales:\n");
+    void imprimirABB(NodoResolucion* nodo);
+    imprimirABB(c.arbolResoluciones);
+}
+
+void imprimirABB(NodoResolucion* nodo) {
+    if (nodo == NULL) return;
+    imprimirABB(nodo->izq);
+    printf("  Resolución: %s | Tipo: %s | Fecha: %s\n", nodo->datos.nombre, nodo->datos.tipoResolucion, nodo->datos.fecha);
+    imprimirABB(nodo->der);
+}
 
 
 
-int main() {
-  Causa *listaCausas = NULL;
